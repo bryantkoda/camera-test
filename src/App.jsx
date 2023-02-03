@@ -7,30 +7,35 @@ const videoConstraints = {
 
 const log = obj => alert(`${JSON.stringify(obj)}`)
 
-const codeReader = new ZXing.BrowserQRCodeReader()
+const codeReader = new ZXing.BrowserBarcodeReader()
 function App() {
   const [devices, setDevices] = useState([])
+  const [result, setResult] = useState(null)
   const [selectedDevice, setSelectedDevice] = useState(null)
 
   useEffect(() => {
-    codeReader
-      .getVideoInputDevices()
-      .then(devices => {
-        log(devices)
-        return devices.map(({label, deviceId}) => ({label, value: deviceId}))
-      })
-      .then(items => {
-        setDevices(items)
-        setSelectedDevice(items[0]['value'])
-      })
+    const init = async () => {
+      await navigator.mediaDevices.getUserMedia({video: true})
+      codeReader
+        .getVideoInputDevices()
+        .then(devices => {
+          return devices.map(({label, deviceId}) => ({label, value: deviceId}))
+        })
+        .then(items => {
+          setDevices(items)
+          setSelectedDevice(items[0]['value'])
+        })
+    }
+
+    init()
   }, [])
 
   const onStart = () => {
-    alert(selectedDevice)
     codeReader
       .decodeOnceFromVideoDevice(selectedDevice, 'video')
       .then(result => {
-        alert(`result: ${result}`)
+        alert(result)
+        // setResult(result)
       })
       .catch(err => {
         alert(`error: ${JSON.stringify(err)}`)
@@ -54,11 +59,11 @@ function App() {
       <div>
         <video
           id="video"
-          width="600"
-          height="400"
-          style={{border: '1px solid #eee'}}
+          style={{width: '100vw', height: '300px', border: '1px solid #eee'}}
         ></video>
+      {result && <p style={{color: '#fff'}}>{result}</p>}
       </div>
+
     </div>
   )
 }
